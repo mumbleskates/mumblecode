@@ -206,7 +206,7 @@ def interval_tree_intersection(tree, intervals):
     for iv in intervals:
         for touching in tree[iv]:
             if iv.data == touching.data:
-                yield Interval(max(iv.begin, touching.begin), min(iv.end, touching.end), iv.data)
+                yield interval_overlap(iv, touching)
 
 
 def merge_interval_overlaps(intervals, open_ended=()):
