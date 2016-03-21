@@ -109,7 +109,7 @@ class FileCache(object):  # stolen & modified from cachecontrol
 
 
 class SQLCache(object):
-    def __init__(self, filepath, worker_keepalive=1.0, commit_spacing=10.0):
+    def __init__(self, filepath, worker_keepalive=10.0, commit_spacing=5.0):
         self._path = os.path.abspath(filepath)
         self._worker_keepalive = worker_keepalive
         self._commit_spacing = commit_spacing
@@ -197,21 +197,31 @@ class _SQLStoreThread(Thread):
             conn = sqlite3.Connection(self.path)
             conn.executescript(self._create_sql)
             cur = conn.cursor()
-            last_commit = monotonic()
+            first_uncommitted = None
             print('SQLCache thread starting for "{}"'.format(self.path))
+            time_now = monotonic()
             while not self.stopped.is_set():
                 try:
-                    action = self.queue.get(timeout=self.keepalive)
-                except Empty:
-                    # it's been too long since something came in, close the thread
-                    break  # close this thread
-                else:
+                    if first_uncommitted is None:
+                        timeout = self.keepalive
+                    else:
+                        timeout = self.commit_spacing - (time_now - first_uncommitted)
+                    action = self.queue.get(timeout=timeout)
+                except Empty:  # timed out
+                    if first_uncommitted is None:
+                        break  # close this thread if there's nothing to do
+                    time_now = monotonic()
+                else:  # got an action
                     action(cur)
                     time_now = monotonic()
-                    if time_now - last_commit >= self.commit_spacing:
-                        # it's been too long since we committed, make a commit
-                        conn.commit()
-                        last_commit = time_now
+                    if first_uncommitted is None:
+                        first_uncommitted = time_now
+
+                if first_uncommitted is not None and time_now - first_uncommitted >= self.commit_spacing:
+                    # it's been too long since we committed, make a commit
+                    conn.commit()
+                    first_uncommitted = None
+
             # loop has ended, close transaction if needed
             if conn.in_transaction:
                 conn.commit()
