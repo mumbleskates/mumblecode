@@ -9,20 +9,15 @@ import sys
 from mumblecode.iterables import collate, merge
 
 
-"""
-I had some indecision/confusion about what name and path format I wanted to
-use with my weechat irc logs. This resulted in a number of different files in
-different folders, by various standards (for instance,
-irc/freenode/#python.weechatlog, irc.freenode.#python.weechatlog,
-2016/02/irc.freenode.#python.weechatlog...) and over different and mixed time
-periods.
+"""I had some indecision/confusion about what name and path format I wanted to use with my weechat irc logs. This
+resulted in a number of different files in different folders, by various standards (for instance,
+irc/freenode/#python.weechatlog, irc.freenode.#python.weechatlog, 2016/02/irc.freenode.#python.weechatlog...) and
+over different and mixed time periods.
 
-I settled on logger.file.mask = "%Y/%m/$plugin.$name.weechatlog", which means
-year/mo/info.weechatlog in the path. This is a simple library to gather up the
-confused files, organize them by common destinations, then interleave the
-lines of files with a common destination, in the correct order by date, while
-still maintaining the line order of lines that originated from any given file.
-"""
+I settled on logger.file.mask = "%Y/%m/$plugin.$name.weechatlog", which means year/mo/info.weechatlog in the path.
+This is a simple library to gather up the confused files, organize them by common destinations, then interleave the
+lines of files with a common destination, in the correct order by date, while still maintaining the line order of
+lines that originated from any given file. """
 
 
 def all_files(path):
