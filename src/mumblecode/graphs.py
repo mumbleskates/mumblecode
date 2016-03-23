@@ -137,7 +137,9 @@ def dijkstra(starts, valid_destination, edgefinder=lambda node: ((x, 1) for x in
     :param edgefinder: A function that returns an iterable of tuples
         of (neighbor, distance) from the node it is passed
     :return: A generator of the paths from any starting node to any valid destination, shortest to longest.
-        Results are yielded as a tuple of (endpoint, (total cost, path)).
+        Results are yielded as a tuple of (total cost, path). 'path' here is a tuple-chain from the destination
+        (path[0]) back to the starting point (path[1][1][1]...[0]). For a path that goes from 1 to 2 to 3, this
+        path would be (3, (2, (1, ()))). See also: convert_path()
     """
     visited = set()
     index = count()
@@ -154,7 +156,7 @@ def dijkstra(starts, valid_destination, edgefinder=lambda node: ((x, 1) for x in
         if node not in visited:
             path = (node, path)
             if valid_destination(node):
-                yield node, (dist, path)
+                yield dist, path
             visited.add(node)
 
             for neighbor, dist_to_neighbor in edgefinder(node):
@@ -204,6 +206,7 @@ def dijkstra_multiple(starts, destinations, edgefinder=lambda node: ((x, 1) for 
 
 
 def convert_path(path):
+    """Convert a reverse linked tuple path (3, (2, (1, ()))) to a forwards list [1, 2, 3]."""
     result = []
     while path:
         result.append(path[0])
