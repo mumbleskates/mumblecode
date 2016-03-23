@@ -56,12 +56,16 @@ def books_spreadsheet():
             yield lastname.lower(), firstname.lower(), title.replace("'", "").lower()
 
 
-if __name__ == '__main__':
+def main():
     archived = set(book_files())
     listed = set(books_spreadsheet())
     archive_missing = listed - archived
     list_missing = archived - listed
-    print("Archive is missing:")
+    print("Archive has {}, is missing:".format(len(archived)))
     display_books(archive_missing)
-    print("Listing is missing:")
+    print("Listing has {}, is missing:".format(len(listed)))
     display_books(list_missing)
+
+
+if __name__ == '__main__':
+    main()
