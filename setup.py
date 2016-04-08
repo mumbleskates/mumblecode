@@ -14,6 +14,7 @@ setup(
     ],
     package_dir={"": "src"},
     install_requires=[
+        'chardet',
         'future',
         'html5lib',
         'intervaltree',

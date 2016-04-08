@@ -88,6 +88,8 @@ class _GreatestValue(object):
 
     __hash__ = object.__hash__
 
+    # TODO: __add__ ?
+
     # some pickling singleton trickery, since there is only ever reason to have one of these
     @staticmethod
     def _provider():
