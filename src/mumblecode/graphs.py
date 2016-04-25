@@ -60,7 +60,6 @@ class Worker(object):
     perform_work function as its sole parameter. The return value of this function must then be the COST of doing the
     work thus described; for instance, edgefinder should describe the distance between the edge and the neighbor,
     and the worker will accept that distance and return the amount of time to travel that distance.
-
     """
 
     def __init__(self, name, perform_work):
