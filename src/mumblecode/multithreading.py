@@ -15,7 +15,7 @@ class CloseableQueue(Queue):
         #   'not self._qsize() and not self.closed'; so, if the queue
         #   is empty and the queue is stopped, we raise StopIteration
         #   instead of waiting or raising Empty.
-        with self.not_empty:
+        with self.mutex:
             if not self._qsize() and self._closed:
                 raise StopIteration
 
@@ -40,7 +40,7 @@ class CloseableQueue(Queue):
             return item
 
     def put(self, item, block=True, timeout=None):
-        with self.not_full:
+        with self.mutex:
             if self._closed:
                 raise ValueError("Queue is closed!")
 
@@ -66,7 +66,7 @@ class CloseableQueue(Queue):
             self.not_empty.notify()
 
     def close(self):
-        with self.not_empty:
+        with self.mutex:
             self._closed = True
             self.not_empty.notify_all()
             self.not_full.notify_all()
