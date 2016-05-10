@@ -2,6 +2,7 @@
 from queue import Queue
 import sqlite3
 from threading import Thread, RLock
+from weakref import finalize
 
 
 class CloseableQueue(Queue):
@@ -63,14 +64,13 @@ class IterProvider(object):
 
                 Thread(target=work).start()
 
+                finalize(self, self.queue.close)
+
             def __next__(self):
                 try:
                     return self.queue.get()
                 except StopIteration:
                     raise
-
-            def __del__(self):
-                self.queue.close()
 
             def __iter__(self):
                 return self
