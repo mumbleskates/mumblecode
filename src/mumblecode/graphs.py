@@ -97,7 +97,9 @@ class Worker(object):
     __repr__ = __str__
 
 
-class WorkPerformed(namedtuple("WorkPerformed", ("cost", "worker"))):
+# justification: namedtuple already has an init
+# noinspection PyClassHasNoInit
+class WorkPerformed(namedtuple("WorkPerformed", "cost worker")):
     def __add__(self, other):
         if other == 0:
             return self
