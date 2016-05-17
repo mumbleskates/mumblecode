@@ -109,7 +109,13 @@ class FileCache(object):  # stolen & modified from cachecontrol
 
 
 class SQLCache(object):
-    def __init__(self, filepath, worker_keepalive=10.0, commit_spacing=5.0):
+    """
+    Maintains a worker thread with an active cursor in a sqlite database that commits periodically.
+    Functions as a bare-bones key-value store on the front end (text to bytes). Rather more performant
+    than committing every interaction, and does not require anything to be installed or set up.
+    """
+
+    def __init__(self, filepath, worker_keepalive=2.0, commit_spacing=2.0):
         self._path = os.path.abspath(filepath)
         self._worker_keepalive = worker_keepalive
         self._commit_spacing = commit_spacing
