@@ -1,7 +1,7 @@
 # coding=utf-8
 
 
-class ReentrantContextWrapper(object):
+class reentrant(object):
     def __init__(self, wrap):
         self.wrapped = wrap
         self.provided = None
