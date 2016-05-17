@@ -1,5 +1,5 @@
 # mumblecode
-A collection of useful tools I have developed over time in Python to ease my own development.
+A collection of useful tools I have developed over time in Python to ease my own development. A work in progress.
 
 ## caching
 Provides very basic persistent key-value stores for Requests responses and API caching.
