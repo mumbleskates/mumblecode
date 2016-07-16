@@ -1,14 +1,14 @@
 # coding=utf-8
-from queue import Queue
+from queue import Queue, Empty, Full
 import sqlite3
-from threading import Thread, RLock
+from threading import Thread
+from time import monotonic
 from weakref import finalize
 
 
 class CloseableQueue(Queue):
     def __init__(self, maxsize=0):
         super().__init__(maxsize)
-        self.mutex = RLock()
         self._closed = False
 
     def get(self, block=True, timeout=None):
@@ -19,13 +19,52 @@ class CloseableQueue(Queue):
         with self.mutex:
             if not self._qsize() and self._closed:
                 raise StopIteration
-            return super(CloseableQueue, self).get(block, timeout)
+
+            # copypasta from queue.Queue.get(); mutex is not reentrant, we can't just call it :(
+            if not block:
+                if not self._qsize():
+                    raise Empty
+            elif timeout is None:
+                while not self._qsize():
+                    self.not_empty.wait()
+            elif timeout < 0:
+                raise ValueError("'timeout' must be a non-negative number")
+            else:
+                endtime = monotonic() + timeout
+                while not self._qsize():
+                    remaining = endtime - monotonic()
+                    if remaining <= 0.0:
+                        raise Empty
+                    self.not_empty.wait(remaining)
+            item = self._get()
+            self.not_full.notify()
+            return item
 
     def put(self, item, block=True, timeout=None):
         with self.mutex:
             if self._closed:
                 raise ValueError("Queue is closed!")
-            super(CloseableQueue, self).put(item, block, timeout)
+
+            # copypasted from queue.Queue.put(); mutex is not reentrant, we can't just call it :(
+            if self.maxsize > 0:
+                if not block:
+                    if self._qsize() >= self.maxsize:
+                        raise Full
+                elif timeout is None:
+                    while self._qsize() >= self.maxsize:
+                        self.not_full.wait()
+                elif timeout < 0:
+                    raise ValueError("'timeout' must be a non-negative number")
+                else:
+                    endtime = monotonic() + timeout
+                    while self._qsize() >= self.maxsize:
+                        remaining = endtime - monotonic()
+                        if remaining <= 0.0:
+                            raise Full
+                        self.not_full.wait(remaining)
+            self._put(item)
+            self.unfinished_tasks += 1
+            self.not_empty.notify()
 
     def close(self):
         with self.mutex:
@@ -54,7 +93,7 @@ class IterProvider(object):
 
                 # must not hold a reference to self to prevent the thread from keeping the iterator alive
                 def work():
-                    for thing in generator:
+                    for thing in generator():
                         try:
                             queue.put(thing)
                         except ValueError:
