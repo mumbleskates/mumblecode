@@ -114,7 +114,7 @@ class IteratorFile(io.TextIOBase):
 
     def __init__(self, it):
         super().__init__()
-        self._it = it
+        self._it = iter(it)
         self._f = io.StringIO()
 
     def read(self, length=sys.maxsize):
