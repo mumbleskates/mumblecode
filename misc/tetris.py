@@ -1,19 +1,21 @@
 # coding=utf-8
 from random import choice
 import sys, time, select, os
+import msvcrt
 from functools import partial
 
 
 # curses non-blocking character fetching
 def get_c():
-    ch = None
-    try:
-        os.system('stty raw</dev/tty')
-        if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
-            ch = sys.stdin.read(1)
-    finally:
-        os.system('stty -raw</dev/tty')
-    return ch
+    return msvcrt.getch() if msvcrt.kbhit() else None
+    # ch = None
+    # try:
+    #     os.system('stty raw</dev/tty')
+    #     if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
+    #         ch = sys.stdin.read(1)
+    # finally:
+    #     os.system('stty -raw</dev/tty')
+    # return ch
 
 # while True:
 #     print "char: %s" % (get_c())
@@ -72,8 +74,8 @@ _build_pieces()
 WIDTH = 10
 HEIGHT = 20
 SPAWN = (5, 23)
-APPEARANCE = {None: " ", 0: "X"}
-APPEARANCE.update({n: str(n) for n in range(1, len(pieces) + 1)})
+APPEARANCE = {None: "  ", 0: "XX"}
+APPEARANCE.update({n: str(n)*2 for n in range(1, len(pieces) + 1)})
 
 field = [[None]*WIDTH for _ in range(HEIGHT)]
 score = 0
@@ -86,11 +88,11 @@ def main():
     FRAME_TIME = 0.1
     FRAMES_PER_ADVANCE = 8
     KEYMAP = {
-        'w': rotate,
-        'a': partial(move, -1),
-        's': drop,
-        'd': partial(move, 1),
-        ' ': drop,
+        b'w': rotate,
+        b'a': partial(move, -1),
+        b's': drop,
+        b'd': partial(move, 1),
+        b' ': drop,
     }
 
     frames_passed = FRAMES_PER_ADVANCE
@@ -104,6 +106,7 @@ def main():
             if not key:
                 break
             else:
+                # print("CAPTURED", repr(key))
                 key = key.lower()
                 KEYMAP.get(key, lambda: None)()
                 draw_game()
@@ -220,12 +223,12 @@ def draw_game():
     )
     for y in range(HEIGHT - 1, -1, -1):
         # print line at y
-        print("".join(
+        print("|{}|".format("".join(
             APPEARANCE[value] for value in
             (0 if (x, y) in current_blocks else field[y][x] for x in range(WIDTH))
-        ))
-        print()
-        print("SCORE: {}".format(score))
+        )))
+    print("+{}+".format("--"*WIDTH))
+    print("SCORE: {}".format(score))
 
 
 if __name__ == '__main__':
