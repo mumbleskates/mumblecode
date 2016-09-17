@@ -10,7 +10,7 @@ setup(
     license="MIT",
     packages=[
         "mumblecode",
-        "mumblecode.api"
+        "mumblecode.api",
     ],
     package_dir={"": "src"},
     install_requires=[

@@ -1,4 +1,6 @@
 # coding=utf-8
+import io
+import sys
 from operator import itemgetter
 
 
@@ -103,3 +105,34 @@ def merge(iterables, *, reverse=False):
                     del opened[i]
 
         yield result
+
+
+class IteratorFile(io.TextIOBase):
+    """ given an iterator which yields strings,
+    return a file like object for reading those strings.
+    From github/jsheedy """
+
+    def __init__(self, it):
+        super().__init__()
+        self._it = iter(it)
+        self._f = io.StringIO()
+
+    def read(self, length=sys.maxsize):
+
+        try:
+            while self._f.tell() < length:
+                self._f.write(next(self._it))
+
+        finally:
+            self._f.seek(0)
+            data = self._f.read(length)
+
+            # save the remainder for next read
+            remainder = self._f.read()
+            self._f.seek(0)
+            self._f.truncate(0)
+            self._f.write(remainder)
+            return data
+
+    def readline(self):
+        return next(self._it)
