@@ -137,6 +137,8 @@ def astar(
         heuristic=None,
         tol=None
 ):
+    # TODO: flag to optionally exclude paths with cycles
+    # TODO: optimize multiple path iteration
     """
     :param starts: iterable of any type, only used as keys.
     :param valid_destination: a predicate function returning true for any node that is a suitable destination
@@ -275,3 +277,6 @@ def convert_path(path):
         path = path[1]
     result.reverse()
     return result
+
+
+# TODO: spanning tree algorithms: Prim, Wilson
