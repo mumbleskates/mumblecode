@@ -105,7 +105,7 @@ class JustBefore(object):
     """
     `JustBefore(x)` sorts exactly the same as `x`, except it is always less than x rather than equal.
     """
-    __slots__ = ("wrap",)
+    __slots__ = ('wrap',)
 
     def __init__(self, wrap):
         self.wrap = wrap
@@ -134,7 +134,7 @@ class JustAfter(object):
     """
     `JustAfter(x)` sorts exactly the same as `x`, except it is always greater than x rather than equal.
     """
-    __slots__ = ("wrap",)
+    __slots__ = ('wrap',)
 
     def __init__(self, wrap):
         self.wrap = wrap
@@ -167,7 +167,7 @@ class _SentinelCls(object):
     __slots__ = ()
 
     def __repr__(self):
-        return "_SENTINEL"
+        return '_SENTINEL'
 
     @staticmethod
     def _provider():
@@ -309,7 +309,7 @@ class _ViewMixin(object):
 
 # Sample = namedtuple("Sample", ["time", "value"])
 @total_ordering
-class Sample(namedtuple("Sample", "point value")):
+class Sample(namedtuple('Sample', 'point value')):
     """Sample(time, value)"""
     __slots__ = ()
 
@@ -345,7 +345,7 @@ class SampledValue(object):
     This is much more useful as a history of observations than as a canonical history.
     """
 
-    __slots__ = ("history",)
+    __slots__ = ('history',)
 
     def __init__(self, samples=(), *, initial_value=None, time=None):
         if initial_value is None and time is None:
@@ -441,7 +441,7 @@ class SampledValue(object):
 
 
 class IntervalMapping(object):
-    __slots__ = ("ivs",)
+    __slots__ = ('ivs',)
 
     def __init__(self, intervals=()):
         self.ivs = sorted(iv for iv in intervals if not iv.is_null())
@@ -719,7 +719,7 @@ class IntervalMapping(object):
 
 
 class HistorySet(object):
-    __slots__ = ("current", "history")
+    __slots__ = ('current', 'history')
 
     def __init__(self, values=(), *, time=None):
         time = time if time is not None else now()
@@ -937,7 +937,7 @@ class HistorySet(object):
 
 
 class HistoryDict(object):
-    __slots__ = ("d", "_len")
+    __slots__ = ('d', '_len')
 
     def __init__(self):
         self.d = {}
@@ -1068,7 +1068,7 @@ class HistoryDict(object):
 
     def items(self):
         class HistoryDictItems(_ViewMixin):
-            __slots__ = ("hd",)
+            __slots__ = ('hd',)
 
             def __init__(self, hd):
                 self.hd = hd
@@ -1090,7 +1090,7 @@ class HistoryDict(object):
 
     def keys(self):
         class HistoryDictKeys(_ViewMixin):
-            __slots__ = ("hd",)
+            __slots__ = ('hd',)
 
             def __init__(self, hd):
                 self.hd = hd
@@ -1105,7 +1105,7 @@ class HistoryDict(object):
 
     def values(self):
         class HistoryDictValues(object):
-            __slots__ = ("hd",)
+            __slots__ = ('hd',)
 
             def __init__(self, hd):
                 self.hd = hd
