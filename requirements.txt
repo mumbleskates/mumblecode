@@ -1,3 +1,4 @@
+tqdm
 colorama==0.3.7
 coverage==4.0.3
 future==0.15.2
