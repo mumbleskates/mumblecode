@@ -131,6 +131,87 @@ def with_initial(initial):
     return dec
 
 
+def astar(
+        starts, valid_destination,
+        edgefinder=lambda node: ((x, 1) for x in node),
+        heuristic=None,
+        tol=None
+):
+    """
+    :param starts: iterable of any type, only used as keys.
+    :param valid_destination: a predicate function returning true for any node that is a suitable destination
+    :param edgefinder: A function that returns an iterable of tuples
+        of (neighbor, distance) from the node it is passed
+    :param heuristic: An optional function that returns an optimistic estimate of the distance from a node
+        to the nearest valid destination
+    :param tol: An optional value; all paths with a total distance less or equal to the best distance plus tol will
+        be yielded
+    :return: A generator of the paths from any starting node to any valid destination, shortest to longest.
+        Results are yielded as a tuple of (total cost, path). 'path' here is a tuple-chain from the destination
+        (path[0]) back to the starting point (path[1][1][1]...[0]). For a path that goes from 1 to 2 to 3, this
+        path would be (3, (2, (1, ()))). See also: convert_path()
+    """
+    if tol is None:
+        visited = set()
+
+        def is_visited(node_, _):
+            return node_ in visited
+
+        def visit(node_, _):
+            if node_ in visited:
+                return False
+            else:
+                visited.add(node_)
+                return True
+
+    else:
+        distances = {}
+
+        def is_visited(node_, dist_):
+            return node_ in distances and dist_ > distances[node_] + tol
+
+        def visit(node_, dist_):
+            if node_ not in distances:
+                distances[node_] = dist_
+                return True
+            else:
+                return dist_ <= distances[node_] + tol
+
+    index = count()
+    heap = []
+
+    def process():
+        for seed in starts:
+            if heuristic is None:
+                yield 0, 0, None, seed, ()
+            else:
+                yield heuristic(seed), 0, None, seed, ()
+        while heap:
+            yield heappop(heap)
+
+    # Heap values are:
+    #   distance + heuristic,
+    #   distance value,
+    #   a unique counter for sorting,
+    #   the next place to go,
+    #   and the (path, (so, (far,)))
+    for _, dist, _, node, path in process():
+        if visit(node, dist):
+            path = (node, path)
+            if valid_destination(node):
+                yield dist, path
+
+            for neighbor, dist_to_neighbor in edgefinder(node):
+                neighbor_dist = dist + dist_to_neighbor
+                if is_visited(neighbor, neighbor_dist):
+                    continue
+                if heuristic is None:
+                    h_dist = neighbor_dist
+                else:
+                    h_dist = neighbor_dist + heuristic(neighbor)
+                heappush(heap, (h_dist, neighbor_dist, next(index), neighbor, path))
+
+
 def dijkstra(starts, valid_destination, edgefinder=lambda node: ((x, 1) for x in node)):
     """
     :param starts: iterable of any type, only used as keys.
@@ -142,27 +223,7 @@ def dijkstra(starts, valid_destination, edgefinder=lambda node: ((x, 1) for x in
         (path[0]) back to the starting point (path[1][1][1]...[0]). For a path that goes from 1 to 2 to 3, this
         path would be (3, (2, (1, ()))). See also: convert_path()
     """
-    visited = set()
-    index = count()
-    heap = []
-
-    def process():
-        for seed in starts:
-            yield 0, None, seed, ()
-        while heap:
-            yield heappop(heap)
-
-    # Heap values are: distance value, a unique counter for sorting, the next place to go, and the (path, (so, (far,)))
-    for dist, _, node, path in process():
-        if node not in visited:
-            path = (node, path)
-            if valid_destination(node):
-                yield dist, path
-            visited.add(node)
-
-            for neighbor, dist_to_neighbor in edgefinder(node):
-                if neighbor not in visited:
-                    heappush(heap, (dist + dist_to_neighbor, next(index), neighbor, path))
+    return astar(starts, valid_destination, edgefinder)
 
 
 def dijkstra_first(starts, valid_destination, edgefinder=lambda node: ((x, 1) for x in node)):
