@@ -5,8 +5,8 @@ import tempfile
 from requests import Session
 from requests.adapters import HTTPAdapter
 
-from mumblecode.tools.caching import CacheWrapper, header_max_age_heuristic, SQLCache
-from mumblecode.tools.ratelimiting import RateLimiter
+from mumblecode.caching import CacheWrapper, header_max_age_heuristic, SQLCache
+from mumblecode.ratelimiting import RateLimiter
 
 
 # requests session
