@@ -24,20 +24,20 @@ def check_parens(string, pairs="()"):
     set may have multiple values with varying positive depth for each opening
     character, but the position will be None.
 
-    >>> check_parens("()")
-    set()
-    >>> check_parens("((()())())")
-    set()
-    >>> check_parens("[<><>]", "[]<>")
-    set()
-    >>> check_parens("))asdf]", "[]")
-    {(']', -1, 6)}
-    >>> sorted(check_parens("{{{(", "{}()"))
-    [('(', 1, None), ('{', 3, None)]
-    >>> check_parens(check_parens.__doc__, "{}")
-    {('{', 5, None)}
-    >>> check_parens(check_parens.__doc__, "<>")
-    {('>', -1, 960)}
+    >>> check_parens("()") == set()
+    True
+    >>> check_parens("((()())())") == set()
+    True
+    >>> check_parens("[<><>]", "[]<>") == set()
+    True
+    >>> check_parens("))asdf]", "[]") == {(']', -1, 6)}
+    True
+    >>> check_parens("{{{(", "{}()") == {('(', 1, None), ('{', 3, None)}
+    True
+    >>> check_parens(check_parens.__doc__, "{}") == {('{', 5, None)}
+    True
+    >>> check_parens(check_parens.__doc__, "<>") == {('>', -1, 960)}
+    True
     """
     begins = {}
     ends = {}
