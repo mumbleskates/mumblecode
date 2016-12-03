@@ -12,7 +12,7 @@ pysha3==0.3
 pytest==3.0.4
 pytest-cov==2.4.0
 PyYAML==3.12
-requests==2.12.1
+requests==2.12.3
 six==1.10.0
 sortedcontainers==1.5.4
 tox==2.5.0
