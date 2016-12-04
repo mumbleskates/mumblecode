@@ -1,88 +1,61 @@
 # coding=utf-8
-from httplib import HTTPConnection, _CS_IDLE
-import urlparse
+from http.client import HTTPConnection, HTTPSConnection, _CS_IDLE
+from collections import deque, namedtuple
 
-def pipeline(domain,pages,max_out_bound=4,debuglevel=0):
-    pagecount = len(pages)
-    conn = HTTPConnection(domain)
-    conn.set_debuglevel(debuglevel)
-    respobjs = [None]*pagecount
-    finished = [False]*pagecount
-    data = [None]*pagecount
-    headers = {'Host':domain,'Content-Length':0,'Connection':'Keep-Alive'}
 
-    while not all(finished):
-        # Send
-        out_bound = 0
-        for i,page in enumerate(pages):
-            if out_bound >= max_out_bound:
-                break
-            elif page and not finished[i] and respobjs[i] is None:
-                if debuglevel > 0:
-                    print 'Sending request for %r...' % (page,)
-                conn._HTTPConnection__state = _CS_IDLE # FU private variable!
-                conn.request("GET", page, None, headers)
-                respobjs[i] = conn.response_class(conn.sock, strict=conn.strict, method=conn._method)
-                out_bound += 1
-        # Try to read a response
-        for i,resp in enumerate(respobjs):
-            if resp is None:
+RequestInfo = namedtuple('RequestInfo', 'method path body headers')
+
+
+class Pipeline(object):
+    def __init__(self, host, max_in_flight=5, https=True):
+        conn_class = HTTPSConnection if https else HTTPConnection
+        self._conn = conn_class(host)
+        self._max_in_flight = max_in_flight
+        self._in_flight = deque()
+
+    def pipeline(self, requests):
+        """
+        Pipeline multiple HTTP requests to the server and handle all responses with callbacks.
+
+        The implementation does NOT prepare an arbitrary number of pending requests;
+        iterables of any length are viable here without wasting memory.
+
+        :param requests: An enumerable of (RequestInfo, callback) tuples
+        """
+        for request, callback in requests:
+            # send the request
+            self._send_request(request, callback)
+
+            # if we have enough requests in-flight, read a response now
+            if len(self._in_flight) < self._max_in_flight:
                 continue
-            if debuglevel > 0:
-                print 'Retrieving %r...' % (pages[i],)
-            out_bound -= 1
-            skip_read = False
-            resp.begin()
-            if debuglevel > 0:
-                print '    %d %s' % (resp.status, resp.reason)
-            if 200 <= resp.status < 300:
-                # Ok
-                data[i] = resp.read()
-                cookie = resp.getheader('Set-Cookie')
-                if cookie is not None:
-                    headers['Cookie'] = cookie
-                skip_read = True
-                finished[i] = True
-                respobjs[i] = None
-            elif 300 <= resp.status < 400:
-                # Redirect
-                loc = resp.getheader('Location')
-                respobjs[i] = None
-                parsed = loc and urlparse.urlparse(loc)
-                if not parsed:
-                    # Missing or empty location header
-                    data[i] = (resp.status, resp.reason)
-                    finished[i] = True
-                elif parsed.netloc != '' and parsed.netloc != host:
-                    # Redirect to another host
-                    data[i] = (resp.status, resp.reason, loc)
-                    finished[i] = True
-                else:
-                    path = urlparse.urlunparse(parsed._replace(scheme='',netloc='',fragment=''))
-                    if debuglevel > 0:
-                        print '  Updated %r to %r' % (pages[i],path)
-                    pages[i] = path
-            elif resp.status >= 400:
-                # Failed
-                data[i] = (resp.status, resp.reason)
-                finished[i] = True
-                respobjs[i] = None
-            if resp.will_close:
-                # Connection (will be) closed, need to resend
-                conn.close()
-                if debuglevel > 0:
-                    print '  Connection closed'
-                for j,f in enumerate(finished):
-                    if not f and respobj[j] is not None:
-                        if debuglevel > 0:
-                            print '  Discarding out-bound request for %r' % (pages[j],)
-                        respobj[j] = None
-                break
-            elif not skip_read:
-                resp.read() # read any data
-            if any(not f and respobjs[j] is None for j,f in enumerate(finished)):
-                # Send another pending request
-                break
-        else:
-            break # All respobjs are None?
-    return data
+            else:
+                self._read_response()
+
+        while self._in_flight:
+            self._read_response()
+
+    def _send_request(self, request, callback):
+        self._conn._HTTPConnection__state = _CS_IDLE
+        self._conn.request(*request)
+        self._in_flight.append((
+            request, callback,
+            self._conn.response_class(self._conn.sock, method=self._conn._method)
+        ))
+
+    def _read_response(self):
+        request, callback, response = self._in_flight.popleft()
+        response.begin()
+        callback(response)
+
+        # connection is closing, we need to recreate the connection
+        if response.will_close:
+            self._conn.close()
+            if not self._in_flight:
+                return  # if we have nothing left to request, w're done
+            # resend pending requests we never got responses to:
+            # drain our old in-flight queue into the new one
+            q, self._in_flight = self._in_flight, deque()
+            while q:
+                request, callback, _ = q.popleft()
+                self._send_request(request, callback)
