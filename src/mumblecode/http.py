@@ -1,15 +1,14 @@
 # coding=utf-8
 from http.client import HTTPConnection, HTTPSConnection, _CS_IDLE
-from collections import deque, namedtuple
-
-
-RequestInfo = namedtuple('RequestInfo', 'method path body headers')
+from collections import deque
 
 
 class Pipeline(object):
-    def __init__(self, host, max_in_flight=5, https=True):
+    def __init__(self, host, max_in_flight=5, https=True, debug_level=0):
         conn_class = HTTPSConnection if https else HTTPConnection
         self._conn = conn_class(host)
+        self.debug_level = debug_level
+        self._conn.debuglevel = debug_level
         self._max_in_flight = max_in_flight
         self._in_flight = deque()
 
@@ -20,7 +19,7 @@ class Pipeline(object):
         The implementation does NOT prepare an arbitrary number of pending requests;
         iterables of any length are viable here without wasting memory.
 
-        :param requests: An enumerable of (RequestInfo, callback) tuples
+        :param requests: An enumerable of ((method, path[, body[, headers]]), callback) tuples.
         """
         for request, callback in requests:
             # send the request
@@ -40,7 +39,7 @@ class Pipeline(object):
         self._conn.request(*request)
         self._in_flight.append((
             request, callback,
-            self._conn.response_class(self._conn.sock, method=self._conn._method)
+            self._conn.response_class(self._conn.sock, method=self._conn._method, debuglevel=self.debug_level)
         ))
 
     def _read_response(self):
