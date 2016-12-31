@@ -209,13 +209,10 @@ def main(outputpath, *inputpaths):
             continue
         print(".".join(key))
 
-        # collating before merging instead of just merging everything isn't strictly necessary;
-        # however, there are some weird edge cases with multi-file logging i wanna hit without
-        # losing data. I may remove this later and just merge() everything at once.
         sources = []
         for input_files in file_lists:
             if key in input_files:
-                sources.append(collate(get_line_reader(f) for f in input_files[key]))
+                sources.extend(get_line_reader(f) for f in input_files[key])
 
         opened = {}
         try:
