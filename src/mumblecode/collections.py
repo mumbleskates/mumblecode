@@ -273,8 +273,7 @@ def merge_interval_overlaps(intervals, open_ended=()):
                     yield Interval(begin=first, end=last, data=key)  # yield accumulated interval
                     first = iv.begin  # start new run
                     last = iv.end
-            else:  # did not merge with an open-ended interval
-                yield Interval(begin=first, end=last, data=key)  # yield the last run
+            yield Interval(begin=first, end=last, data=key)  # yield the last run
 
 
 class _ViewMixin(object):
