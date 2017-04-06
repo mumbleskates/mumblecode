@@ -21,6 +21,7 @@ setup(
         'lockfile',
         'pysha3',
         'requests',
+        'tqdm',
     ],
     extras_require={
         'test': ['pytest-cov', 'tox']

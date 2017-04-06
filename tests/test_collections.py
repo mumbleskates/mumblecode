@@ -1,5 +1,5 @@
 # coding=utf-8
-from mumblecode.tools.collections import IntervalMapping, WeightedSet
+from mumblecode.collections import IntervalMapping, WeightedSet
 from itertools import chain
 
 

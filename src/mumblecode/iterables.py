@@ -1,7 +1,20 @@
 # coding=utf-8
 import io
-import sys
+from itertools import chain, islice
 from operator import itemgetter
+import sys
+
+
+def grouper_it(n, iterable):
+    """Unflatten an iterable into groups of n elements"""
+    it = iter(iterable)
+    while True:
+        chunk_it = islice(it, n)
+        try:
+            first_el = next(chunk_it)
+        except StopIteration:
+            return
+        yield chain((first_el,), chunk_it)
 
 
 def collate(iterables, *, reverse=False):
