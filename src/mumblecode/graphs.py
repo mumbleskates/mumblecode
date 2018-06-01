@@ -236,10 +236,7 @@ def dijkstra_first(starts, valid_destination, edgefinder=lambda node: ((x, 1) fo
         of (neighbor, distance) from the node it is passed
     :return: the shortest path from any starting node to any valid destination, or (None, ()) if none exists
     """
-    try:
-        return next(dijkstra(starts, valid_destination, edgefinder))
-    except StopIteration:
-        return None, ()  # no path exists
+    return next(dijkstra(starts, valid_destination, edgefinder), (None, ()))
 
 
 def dijkstra_simple(start, destination, edgefinder=lambda node: ((x, 1) for x in node)):
@@ -251,7 +248,7 @@ def dijkstra_simple(start, destination, edgefinder=lambda node: ((x, 1) for x in
     :return: Returns the shortest path from the start to the destination.
         Only accepts one start and one end.
     """
-    return dijkstra_first((start,), lambda node: node == destination, edgefinder)
+    return dijkstra_first((start,), (lambda node: node == destination), edgefinder)
 
 
 def dijkstra_multiple(starts, destinations, edgefinder=lambda node: ((x, 1) for x in node)):
@@ -273,8 +270,8 @@ def convert_path(path):
     """Convert a reverse linked tuple path (3, (2, (1, ()))) to a forwards list [1, 2, 3]."""
     result = []
     while path:
-        result.append(path[0])
-        path = path[1]
+        step, path = path
+        result.append(step)
     result.reverse()
     return result
 
