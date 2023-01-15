@@ -19,7 +19,6 @@ setup(
         'html5lib',
         'intervaltree',
         'lockfile',
-        'pysha3',
         'requests',
         'tqdm',
     ],

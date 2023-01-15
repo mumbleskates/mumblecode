@@ -1,6 +1,7 @@
 # coding=utf-8
 import base64
 from datetime import datetime, timezone, timedelta
+from hashlib import sha3_256
 import json
 import os
 from queue import Queue, Empty, Full
@@ -10,7 +11,6 @@ from threading import Thread, Event, Semaphore
 from time import monotonic
 import zlib
 
-from sha3 import sha3_256
 from lockfile import LockFile
 
 
