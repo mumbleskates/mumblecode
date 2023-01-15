@@ -1,7 +1,8 @@
 # coding=utf-8
+from collections import namedtuple
 import io
-from itertools import chain, islice
-from operator import itemgetter
+from heapq import heapify, heappush, heappop
+from itertools import chain, count, islice
 import sys
 
 
@@ -15,6 +16,11 @@ def grouper_it(n, iterable):
         except StopIteration:
             return
         yield chain((first_el,), chunk_it)
+
+
+class _MaxHeapItem(namedtuple("MaxHeapItemTuple", "item")):
+    def __lt__(self, other):
+        return other.item < self.item
 
 
 def collate(iterables, *, reverse=False):
@@ -34,38 +40,47 @@ def collate(iterables, *, reverse=False):
     ...     [5, 6, 7, 4, 5, 6],
     ...     [6, 1, 2, 3],
     ...     [8, 10, 12],
-    ...     [8, 9, 11, 13]
+    ...     [8, 9, 11, 13],
     ... ]))
     [5, 6, 6, 1, 2, 3, 7, 4, 5, 6, 8, 8, 9, 10, 11, 12, 13]
     """
-    first = max if reverse else min
-    opened = []
-    current = []
-    # get the first items if they exist
+    wrap = _MaxHeapItem if reverse else lambda x: x
+    # populate the heap with each iterator's first item, if present
+    heap = []
+    c = count()
     for feed in iterables:
         it = iter(feed)
         try:
-            current.append(next(it))
+            item = next(it)
         except StopIteration:
             continue
         else:
-            opened.append(it)
+            heap.append((wrap(item), next(c), item, it))
+    heapify(heap)
 
-    while opened:
-        i, result = first(enumerate(current), key=itemgetter(1))
+    while heap:
+        _wrapped_item, iter_index, item, top_iter = heappop(heap)
         # advance only the feed we just took the item from
+        yield item
         try:
-            current[i] = next(opened[i])
+            new_item = next(top_iter)
+            heappush(heap, (wrap(new_item), iter_index, new_item, top_iter))
         except StopIteration:
-            # feed is finished, remove its entry in the lists
-            del current[i]
-            del opened[i]
-
-        yield result
+            pass  # iterator was exhausted
 
 
-# this inspector is kinda dumb
-# noinspection PyTypeChecker
+def remove_repeats(iterable):
+    """
+    Returns an iterable that yields the items from the given iterable with
+    successive equal items removed.
+    """
+    last_item = object()
+    for item in iterable:
+        if item != last_item:
+            yield item
+        last_item = item
+
+
 def merge(iterables, *, reverse=False):
     """
     Merges multiple possibly incomplete iterators that may include selections
@@ -93,31 +108,7 @@ def merge(iterables, *, reverse=False):
     True
 
     """
-    first = max if reverse else min
-    opened = []
-    current = []
-    for feed in iterables:
-        it = iter(feed)
-        try:
-            current.append(next(it))
-        except StopIteration:
-            continue
-        else:
-            opened.append(it)
-
-    while opened:
-        result = first(current)
-        # advance every feed that is going to provide an equal value
-        # in reversed order so we can delete in-place while iterating
-        for i in reversed(range(len(opened))):
-            if current[i] == result:
-                try:
-                    current[i] = next(opened[i])
-                except StopIteration:
-                    del current[i]
-                    del opened[i]
-
-        yield result
+    return remove_repeats(collate(iterables, reverse=reverse))
 
 
 class IteratorFile(io.TextIOBase):
