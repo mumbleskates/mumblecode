@@ -597,7 +597,7 @@ class IntervalMapping(object):
                 # print("ending is after interval")
 
         # modify the list
-        if wrapped_value is not ():
+        if wrapped_value != ():
             replacement.append(Interval(begin, end, wrapped_value[0]))
         # print("intervals being covered", slice(begin_index, end_index), self.ivs[begin_index:end_index])
         # print("replacing with", replacement)
