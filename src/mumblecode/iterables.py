@@ -43,6 +43,13 @@ def collate(iterables, *, reverse=False):
     ...     [8, 9, 11, 13],
     ... ]))
     [5, 6, 6, 1, 2, 3, 7, 4, 5, 6, 8, 8, 9, 10, 11, 12, 13]
+    >>> list(collate([
+    ...     [6, 5, 4, 7, 6, 5],
+    ...     [3, 2, 1, 6],
+    ...     [12, 10, 8],
+    ...     [13, 11, 9, 8],
+    ... ], reverse=True))
+    [13, 12, 11, 10, 9, 8, 8, 6, 5, 4, 7, 6, 5, 3, 2, 1, 6]
     """
     wrap = _MaxHeapItem if reverse else lambda x: x
     # populate the heap with each iterator's first item, if present
@@ -105,6 +112,15 @@ def merge(iterables, *, reverse=False):
     ...     for put_in in sample(range(10), randint(1, 5)):
     ...         small_lists[put_in].append(item)
     >>> original == list(merge(small_lists))
+    True
+
+    >>> from random import sample, randint
+    >>> original = list(reversed(range(1000)))
+    >>> small_lists = [[] for _ in range(10)]
+    >>> for item in original:
+    ...     for put_in in sample(range(10), randint(1, 5)):
+    ...         small_lists[put_in].append(item)
+    >>> original == list(merge(small_lists, reverse=True))
     True
 
     """
